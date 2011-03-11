@@ -132,7 +132,7 @@ public class State {
     }
 
     public static int[][][] getpBottom() {
-        return pWidth;
+        return pBottom;
     }
 
     public static int[][][] getpTop() {
