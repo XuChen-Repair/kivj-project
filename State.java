@@ -12,10 +12,6 @@ public class State {
 
 	public boolean lost = false;
 	
-	
-	
-
-	
 	public TLabel label;
 	
 	//current turn
@@ -132,7 +128,7 @@ public class State {
     }
 
     public static int[][][] getpBottom() {
-        return pWidth;
+        return pBottom;
     }
 
     public static int[][][] getpTop() {
