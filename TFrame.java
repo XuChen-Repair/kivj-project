@@ -93,12 +93,12 @@ public class TFrame extends JFrame implements KeyListener{
 						if(slot > State.COLS-State.pWidth[s.nextPiece][orient])
 							slot = State.COLS-State.pWidth[s.nextPiece][orient];
 						
-						s.draw();
+						//s.draw();
 						if(mode == NONE)	{
 							label.text(State.COLS/2.0, State.ROWS/2.0, "You Lose");
 						}
 						s.clearNext();
-						s.drawNext(slot, orient);
+						//s.drawNext(slot, orient);
 						break;
 					}
 					default:
@@ -144,9 +144,9 @@ public class TFrame extends JFrame implements KeyListener{
 	
 	public static void main(String[] args) {
 		State s = new State();
-		TFrame t = new TFrame(s);
-		s.draw();
-		s.drawNext(0,0);
+		//TFrame t = new TFrame(s);
+		//s.draw();
+		//s.drawNext(0,0);
 		//t.save("picture.png");
 		
 	}

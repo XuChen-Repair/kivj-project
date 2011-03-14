@@ -85,8 +85,8 @@ public class PlayerSkeleton {
 		PlayerSkeleton p = new PlayerSkeleton();
 		while(!s.hasLost()) {
 			s.makeMove(p.pickMove(s,s.legalMoves()));
-			s.draw();
-			s.drawNext(0,0);
+			//s.draw();
+			//s.drawNext(0,0);
 			try {
 				Thread.sleep(300);
 			} catch (InterruptedException e) {
@@ -191,7 +191,7 @@ public class PlayerSkeleton {
 		int val = 0;
 		val += weights[0]*totalHeight()  + weights[1]*diffHeight();
 		val += weights[2]*maxHeight() + weights[3]*holesCount();
-		//val += weights[4]*topDownHoleCount();
+		val += weights[4]*topDownHoleCount();
 		return val;
 	}
 	
@@ -245,7 +245,6 @@ public class PlayerSkeleton {
 	}
 	
 	// Feature 5 - Returns number of holes with respect to their location
-	/**
 	public int topDownHoleCount()
 	{
 		int count = 0;
@@ -261,7 +260,6 @@ public class PlayerSkeleton {
 		}
 		return count;
 	}
-	**/
 
 	
 }
