@@ -6,7 +6,7 @@ public class PlayerSkeleton {
 	
 	protected int [][] field;
 	protected int [] top = new int[COLS];
-	protected float[] weights;
+	protected double[] weights;
 	protected int rowsCleared; // Rows cleared by a Single Move, not total rows cleared
 	protected int nextPiece;
 	protected int turn;
@@ -83,12 +83,14 @@ public class PlayerSkeleton {
 		State s = new State();
 		new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();
+		double [] w = {7.439441181924077, 17.2275084057153, 0.9602701415538313 ,100.0 };
+		p.setWeights(w);
 		while(!s.hasLost()) {
 			s.makeMove(p.pickMove(s,s.legalMoves()));
 			s.draw();
 			s.drawNext(0,0);
 			try {
-				Thread.sleep(300);
+				Thread.sleep(1);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -181,7 +183,7 @@ public class PlayerSkeleton {
 		}
 	}
 	// Sets weights for the heuristics
-	public void setWeights(float[] newWeights)
+	public void setWeights(double[] newWeights)
 	{
 		this.weights = newWeights;
 	}

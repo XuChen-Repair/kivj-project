@@ -3,19 +3,22 @@ import java.util.Random;
 
 public class Particle {
 	
-	public static final int VELOCITYSTEP = 5;
+	// Using some recommended values from http://www.hvass-labs.org/people/magnus/publications/pedersen10good-pso.pdf
+	public static final double V_PARAM1 = 0.5069;
+	public static final double V_PARAM2 = 2.5524;
+	public static final double V_PARAM3 = 1.0056;
 	
-	float[] weight;
-	float[] velocity;
+	double[] weight;
+	public double[] velocity;
 	int pBest; // personal best score so far
-	float[] pBestWeight; // Weight values for best score
-	public Particle(float[] w, float[] v) {
+	double[] pBestWeight; // Weight values for best score
+	public Particle(double[] w, double[] v) {
 		weight = w;
 		velocity = v;
-		pBestWeight = new float[weight.length];
+		pBestWeight = new double[weight.length];
 	}
 
-	public float[] getWeights() {
+	public double[] getWeights() {
 		return weight;
 	}
 
@@ -28,19 +31,29 @@ public class Particle {
 		}
 	}
 
-	public void updateVelocity(float[] gBestWeight, Random rand) {
-		float r = rand.nextFloat()*VELOCITYSTEP;
+	public void updateVelocity(double[] gBestWeight, Random rand, int bound) {
 		for (int i = 0; i < velocity.length; i++)
 		{
-			velocity[i] += r*(gBestWeight[i]-velocity[i])*rand.nextFloat() + r*(pBestWeight[i]-velocity[i])*rand.nextFloat();
+			//System.out.println( r + " " + r*(gBestWeight[i]-weight[i]) + " " + (r*pBestWeight[i]-velocity[i]));
+			//System.out.println("Velocites:" + velocity[i] + " " + (velocity[i] + r*(gBestWeight[i]-weight[i])) + " " + (velocity[i] + r*(gBestWeight[i]-weight[i]) + r*(pBestWeight[i]-weight[i])));
+			velocity[i] = V_PARAM1*velocity[i] + V_PARAM2*(pBestWeight[i]-weight[i])*rand.nextDouble() + V_PARAM3*(gBestWeight[i]-weight[i])*rand.nextDouble();
+			if (velocity[i] > bound) // Bound velocity
+				velocity[i] = bound;
+			else if (velocity[i] < -bound)
+				velocity[i] = -bound;
+	//		System.out.println("New:" + velocity[i]);
 		}
 	}
 	
-	public void updatePosition() // Updates Weights based on velocity
+	public void updatePosition(int maxBound, int minBound) // Updates Weights based on velocity
 	{
 		for (int i=0; i< velocity.length; i++)
 		{
 			weight[i] += velocity[i];
+			if (weight[i] > maxBound) // Bounds range of weights
+				weight[i] = maxBound;
+			else if (weight[i] < minBound)
+				weight[i] = minBound;
 		}
 	}
 
