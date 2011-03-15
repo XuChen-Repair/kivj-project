@@ -1,16 +1,23 @@
 public class PlayerSkeleton {
 	
-	public static final int COLS = 10;
-	public static final int ROWS = 21;
-	public static final int N_PIECES = 7;
 	
-	protected int [][] field;
-	protected int [] top = new int[COLS];
+	protected int [][] field = new int[State.ROWS][State.COLS];
+	protected int [] top = new int[State.COLS];
 	protected double[] weights;
-	protected int rowsCleared; // Rows cleared by a Single Move, not total rows cleared
 	protected int nextPiece;
 	protected int turn;
 	protected int height;
+	// Following variables are features
+	protected int totalHeight;
+	protected int diffHeight;
+	protected int maxHeight;
+	protected int rowsCleared; // Rows cleared by a Single Move, not total rows cleared
+	protected int weightedSum;
+	protected int holeCount;
+	protected int connectedHole;
+	protected int maxWellDepth;
+	protected int sumWells;
+
 	//possible orientations for a given piece type
 	protected static int[] pOrients = {1,2,4,4,4,2,2};
 	
@@ -63,7 +70,9 @@ public class PlayerSkeleton {
 		int currentHeuristics;
 		for (int i = 0; i < legalMoves.length; i++)
 		{
-			field = s.getField();
+			for (int j=0; j <State.ROWS ;j++) {
+				System.arraycopy(s.getField()[j],0, field[j],0, State.COLS);
+			}
 			System.arraycopy(s.getTop(), 0, top, 0, s.getTop().length);
 			if (makeMove(legalMoves[i][0], legalMoves[i][1]))
 			{
@@ -74,7 +83,7 @@ public class PlayerSkeleton {
 					bestHeuristics = currentHeuristics;
 				}
 			}
-			undoMove(legalMoves[i][0], legalMoves[i][1]);
+//			undoMove(legalMoves[i][0], legalMoves[i][1]);
 		}
 		return bestMove;
 	}
@@ -83,22 +92,17 @@ public class PlayerSkeleton {
 		State s = new State();
 		new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();
-		double [] w = {7.439441181924077, 17.2275084057153, 0.9602701415538313 ,100.0 };
+		double [] w = {0.0 ,0.0 ,31.00038279871916, 0.0, 100.0, 0.19552791317599985, 0.0 ,0.0 ,30.268532359992115};
 		p.setWeights(w);
 		while(!s.hasLost()) {
 			s.makeMove(p.pickMove(s,s.legalMoves()));
 			s.draw();
 			s.drawNext(0,0);
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 		}
 		System.out.println("You have completed "+s.getRowsCleared()+" rows.");
 	}
 	
-	// Copy of makeMove in State, but without row clearing 
+	// Copy of makeMove in State
 	public boolean makeMove(int orient, int slot) {
 
 		rowsCleared = 0;
@@ -111,7 +115,7 @@ public class PlayerSkeleton {
 		}
 		
 		//check if game ended
-		if(height+pHeight[nextPiece][orient] >= ROWS) {
+		if(height+pHeight[nextPiece][orient] >= State.ROWS) {
 			return false;
 		}
 		
@@ -132,7 +136,7 @@ public class PlayerSkeleton {
 		for(int r = height+pHeight[nextPiece][orient]-1; r >= height; r--) {
 			//check all columns in the row
 			boolean full = true;
-			for(int c = 0; c < COLS; c++) {
+			for(int c = 0; c < State.COLS; c++) {
 				if(field[r][c] == 0) {
 					full = false;
 					break;
@@ -141,9 +145,8 @@ public class PlayerSkeleton {
 			//if the row was full - remove it and slide above stuff down
 			if(full) {
 				rowsCleared++;
-	// Commenting out rows clearing code to simplify undoing
-	/*			//for each column
-				for(int c = 0; c < COLS; c++) {
+				//for each column
+				for(int c = 0; c < State.COLS; c++) {
 
 					//slide down all bricks
 					for(int i = r; i < top[c]; i++) {
@@ -152,14 +155,14 @@ public class PlayerSkeleton {
 					//lower the top
 					top[c]--;
 					while(top[c]>=1 && field[top[c]-1][c]==0)	top[c]--;
-				}*/
+				}
 			}
 		}
 		
 		return true;
 	}
 	
-	
+	/*
 	public void undoMove(int orient, int slot){
 		// Undo the move
 		int i = 0;
@@ -169,7 +172,7 @@ public class PlayerSkeleton {
 		//for each column in the piece - fill in the appropriate blocks
 		for( i = 0; i < pWidth[nextPiece][orient]; i++) {		
 			//from bottom to top of brick
-			for( h = height+pBottom[nextPiece][orient][i]; h < ROWS; h++) {
+			for( h = height+pBottom[nextPiece][orient][i]; h < State.ROWS; h++) {
 				if (field[h][i+slot]== turn)
 				{
 					field[h][i+slot] = 0;
@@ -181,7 +184,8 @@ public class PlayerSkeleton {
 		{
 			System.out.println(i + " "+ h + " "+ slot);
 		}
-	}
+	}*/
+	
 	// Sets weights for the heuristics
 	public void setWeights(double[] newWeights)
 	{
@@ -190,60 +194,87 @@ public class PlayerSkeleton {
 	// Calculates and returns heuristics value
 	public int getHeuristicsVal()
 	{
+		checkHeights();
+		checkHoles();
+		checkWells();
 		int val = 0;
-		val += weights[0]*totalHeight()  + weights[1]*diffHeight();
-		val += weights[2]*maxHeight() + weights[3]*holesCount();
+		val += weights[0]*totalHeight  + weights[1]*diffHeight;
+		val += weights[2]*maxHeight + weights[3]*rowsCleared;
+		val +=weights[4]*holeCount + weights[5]*weightedSum;
+		val += weights[6]*connectedHole + weights[7]*maxWellDepth;
+		val += weights[8]*sumWells;
 		return val;
 	}
 	
 	// Feature 1 - Returns sum of heights of columns
-	public int totalHeight()
-	{
-		int tHeight = 0;
-		for (int i=0; i< top.length; i++)
-		{
-			tHeight += top[i];
-		}
-		return tHeight - rowsCleared*top.length;
-	}
-	
 	// Feature 2 - Returns sum of difference of height of adjacent columns
-	public int diffHeight()
+	// Feature 3 - Returns max column Height
+	public void checkHeights()
 	{
-		int dHeight = 0;
-		for (int i=0; i < top.length-1; i++)
+		totalHeight = 0;
+		diffHeight = 0;
+		maxHeight = 0;
+		for (int i=0; i< top.length-1; i++)
 		{
-			dHeight += Math.abs(top[i] - top[i+1]);
+			totalHeight += top[i];
+			diffHeight += Math.abs(top[i] - top[i+1]);
+			maxHeight = Math.max(maxHeight, top[i]);
 		}
-		return dHeight;
+		totalHeight+= top[top.length-1];
+		maxHeight = Math.max(maxHeight, top[top.length-1]);
 	}
 	
-	// Feature 3 - Returns max column Height
-	public  int maxHeight()
-	{
-		int mHeight = 0;
-		for (int i = 0; i< top.length; i++)
-		{
-			mHeight = Math.max(mHeight, top[i]);
-		}
-		return mHeight - rowsCleared;
-	}
 	
 	// Feature 4 - Returns number of holes in field
-	public int holesCount()
+	// Feature 5 - Sum of filled cells, weighted by the row
+	// Feature 6 - Number of holes, vertically connected holes are counted as 1
+	public void checkHoles()
 	{
-		int count = 0;
-		for (int i = 0; i< COLS; i++)
+		holeCount = 0;
+		weightedSum = 0;
+		connectedHole = 0;
+		for (int i = 0; i< State.COLS; i++)
 		{
 			for (int j = top[i]-1; j >= 0; j--)
 			{
 				if (field[j][i] == 0)
-					//System.out.print(i);
-					count++;
+				{
+					holeCount++;
+					if (field[j+1][i] != 0)
+						connectedHole++;
+				}
+				else
+					weightedSum +=j;
 			}
 		}
-		return count;
 	}
-
+	
+	// Feature 7 - depth of deepest well in field
+	// Feature 8 - Sum of depths of wells
+	public void checkWells()
+	{
+		maxWellDepth = 0;
+		sumWells = 0;
+		if (top[0] < top[1])
+		{
+			maxWellDepth = top[1] - top[0];
+			sumWells = top[1] - top[0];
+		}
+		for (int i=1; i < top.length-1; i++)
+		{
+			if (top[i] < top[i-1] && top[i] < top[i+1])
+			{
+				int currDepth = Math.min(top[i-1], top[i+1]) - top[i];
+				maxWellDepth = Math.max(currDepth, maxWellDepth);
+				sumWells += currDepth;
+			}
+		}
+		if (top[top.length-1] < top[top.length-2])
+		{
+			maxWellDepth = Math.max(maxWellDepth, top[top.length-2]- top[top.length-1]);
+			sumWells += top[top.length-2]- top[top.length-1];
+		}
+	}
+	
 	
 }

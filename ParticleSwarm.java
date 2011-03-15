@@ -4,8 +4,8 @@ public class ParticleSwarm {
 	public static final int MINBOUND = 0;
 	public static final int RANGE = MAXBOUND - MINBOUND;
 	public static final int VELOCITYINIT = RANGE;
-	public static final int FEATURECOUNT = 4; // Number of features to assign weights to
-	public static final int SWARMSIZE = 50;//203; // Number of swarm particles
+	public static final int FEATURECOUNT = 9; // Number of features to assign weights to
+	public static final int SWARMSIZE = 53;//203; // Number of swarm particles
 	public static final int ITERATION = 50;
 	public static final int REPETITION = 3;
 	
@@ -40,14 +40,16 @@ public class ParticleSwarm {
 				particles[i].updateVelocity(gBestWeight, rand, VELOCITYINIT);
 				particles[i].updatePosition(MAXBOUND, MINBOUND);
 			}
-			System.out.println("Best Score in iter" +iter + " " + gBest);
+			System.out.print("Best Score in iter" +iter + " " + gBest);
 			for (int k = 0; k< gBestWeight.length; k++)
 				System.out.print(gBestWeight[k] + " ");
+			System.out.println();
 		}
-		System.out.println("Best Score " + gBest);
+		System.out.print("Best Score " + gBest);
 		for (int i = 0; i< gBestWeight.length; i++)
 			System.out.print(gBestWeight[i] + " ");
-		for (int i = 0; i < particles.length; i++)
+		System.out.println();
+	/*	for (int i = 0; i < particles.length; i++)
 		{
 			System.out.print("Weights: ");
 			for (int j = 0; j< particles[i].getWeights().length; j++)
@@ -60,7 +62,7 @@ public class ParticleSwarm {
 				System.out.print(particles[i].velocity[j] + " ");
 			}
 			System.out.println();
-		}
+		}*/
 		
 	}
 
