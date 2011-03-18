@@ -4,9 +4,9 @@ import java.util.Random;
 public class Particle {
 	
 	// Using some recommended values from http://www.hvass-labs.org/people/magnus/publications/pedersen10good-pso.pdf
-	public static final double V_PARAM1 = -0.3488;//0.5069;
-	public static final double V_PARAM2 = -0.2746;//2.5524;
-	public static final double V_PARAM3 = 4.8976;//1.0056;
+	public static final double V_PARAM1 = 0.6571;//-0.3488;//0.5069;
+	public static final double V_PARAM2 = 1.6319;//-0.2746;//2.5524;
+	public static final double V_PARAM3 = 0.6239;//4.8976;//1.0056;
 	
 	double[] weight;
 	public double[] velocity;
