@@ -66,7 +66,7 @@ public class ParticleSwarm {
 
 		try {
 			//Construct the BufferedWriter object
-			bufferedWriter = new BufferedWriter(new FileWriter(FILENAME));
+			bufferedWriter = new BufferedWriter(new FileWriter(FILENAME, true));
 
 			//Start writing to the output stream
 			bufferedWriter.append(gBest + " ");

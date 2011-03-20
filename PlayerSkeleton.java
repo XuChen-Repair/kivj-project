@@ -92,17 +92,28 @@ public class PlayerSkeleton {
 	}
 	
 	public static void main(String[] args) {
+	//	int sum = 0;
+	//	int min = Integer.MAX_VALUE;
+	//	for (int i = 0; i < 5 ; i++)
+	//	{
 		State s = new State();
-	//	new TFrame(s);
+		new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();
-		double [] w = {39.184489399532 ,9.711199918686605 ,0.0 ,4.297274641669092, 4.295650663135699, 50.11040500544464, 0.0, 46.34921174320965, 22.932964777428765 ,34.01598307533192, 25.99550657719415 ,100.0 ,75.38795059557495}; 
+		// Best ave weights achieved so far 
+		double [] w = { 39.87226246992793, 0.2822313301577022, 0.0, 0.0, 0.0, 90.41644192059289, 0.0, 100.0, 29.025892632632264, 57.261460721109174, 26.175997125047157, 100.0, 4.939800183261108};      
+	//	double [] w = { 58.912809904494324, 0.0, 0.31403775562943975, 1.3580772272231452, 14.987648344779851, 97.40010722018096, 0.2238928871419224, 72.2956798023515, 43.969592318687155, 44.01371135773606, 25.64396612944828, 86.53687675629048, 88.44109531383216 };
 		p.setWeights(w);
 		while(!s.hasLost()) {
 			s.makeMove(p.pickMove(s,s.legalMoves()));
-		//	s.draw();
-		//	s.drawNext(0,0);
+			s.draw();
+			s.drawNext(0,0);
 		}
 		System.out.println("You have completed "+s.getRowsCleared()+" rows.");
+	//	sum +=s.getRowsCleared();
+	//	min = Math.min(min, s.getRowsCleared());
+	//	}
+	//	System.out.println(sum/5 + " " + min);
+		
 	}
 	
 	// Copy of makeMove in State
