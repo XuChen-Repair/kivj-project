@@ -6,12 +6,13 @@ public class ParticleSwarm {
 	public static final int MINBOUND = 0;
 	public static final int RANGE = MAXBOUND - MINBOUND;
 	public static final int VELOCITYINIT = RANGE;
-	public static final int FEATURECOUNT = 13; // Number of features to assign weights to
+	public static final int FEATURECOUNT = 15; // Number of features to assign weights to
 	public static final int SWARMSIZE = 63;//203; // Number of swarm particles
 	public static final int ITERATION = 50;
 	public static final int REPETITION = 1;
 	public static final String FILENAME = "particle.txt";
-
+	public static final long testSeed = 1300715528447L;
+	
 	private static Random rand = new Random(); // Random number generator
 	private static Particle[] particles;
 	private static int gBest= 0; // Best global score
@@ -93,6 +94,7 @@ public class ParticleSwarm {
 	// Plays a single game and using a weights of the particle and returns score
 	private static int evaluate(Particle particle) {
 		State s = new State();
+		s.setSeed(testSeed);
 		//	new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();	
 		p.setWeights(particle.getWeights());

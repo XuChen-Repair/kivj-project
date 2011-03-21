@@ -1,3 +1,8 @@
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class PlayerSkeleton {
 	
 	
@@ -18,8 +23,10 @@ public class PlayerSkeleton {
 	protected int connectedHole;
 	protected int maxWellDepth;
 	protected int sumWells;
+	protected int weightedWells;
 	protected int hTransition;
 	protected int vTransition;
+	protected int erodedCells; // rowsCleared * number of cells cleared belonging to this turn's piece
 
 	//possible orientations for a given piece type
 	protected static int[] pOrients = {1,2,4,4,4,2,2};
@@ -80,47 +87,94 @@ public class PlayerSkeleton {
 			if (makeMove(legalMoves[i][0], legalMoves[i][1]))
 			{
 				currentHeuristics = getHeuristicsVal();
-				if (currentHeuristics < bestHeuristics)
+				if (currentHeuristics < bestHeuristics) // Smaller heuristics = better
 				{
 					bestMove = i;
 					bestHeuristics = currentHeuristics;
 				}
 			}
-//			undoMove(legalMoves[i][0], legalMoves[i][1]);
 		}
 		return bestMove;
 	}
 	
+	// Generating TestSeeds list, runs 20 iterations using a given weight 
+	// And writes hardest seed sequence (lowest score) to textfile
 	public static void main(String[] args) {
-	//	int sum = 0;
-	//	int min = Integer.MAX_VALUE;
-	//	for (int i = 0; i < 5 ; i++)
-	//	{
+		int min = Integer.MAX_VALUE;
+		 double [] w = { 39.87226246992793, 0.2822313301577022, 0.0, 0.0, 0.0, 90.41644192059289, 0.0, 100.0, 29.025892632632264, 57.261460721109174, 0.0, 26.175997125047157, 100.0, 4.939800183261108, 0};
+		long minSeed = 0;
+		for (int i = 0; i < 20 ; i++)			
+		{
+			State s = new State();
+			long seed = s.setRandomSeed();
+		//	long seed = 1300715528447L;
+		//	s.setSeed(seed);
+			System.out.println("Seed: "  + seed);
+		//	new TFrame(s);
+			PlayerSkeleton p = new PlayerSkeleton(); 
+			p.setWeights(w);
+			while(!s.hasLost()) {
+				s.makeMove(p.pickMove(s,s.legalMoves()));
+			//	s.draw();
+			//	s.drawNext(0,0);
+			}
+			System.out.println("Rows Cleared: " + s.getRowsCleared());
+			if (s.getRowsCleared() < min)
+			{
+				min = s.getRowsCleared();
+				minSeed = seed;
+			}
+		//	System.out.println("You have completed "+s.getRowsCleared()+" rows.");
+		}
+		BufferedWriter bufferedWriter = null;
+
+		try {
+			//Construct the BufferedWriter object
+			bufferedWriter = new BufferedWriter(new FileWriter("seeds.txt", true));
+
+			//Start writing to the output stream
+			bufferedWriter.append(minSeed + "\n");
+		} catch (FileNotFoundException ex) {
+			ex.printStackTrace();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			//Close the BufferedWriter
+			try {
+				if (bufferedWriter != null) {
+					bufferedWriter.flush();
+					bufferedWriter.close();
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+	
+	// Default playing mode, plays one random game
+	public static void main2(String[] args) {
+		double [] w = { 39.87226246992793, 0.2822313301577022, 0.0, 0.0, 0.0, 90.41644192059289, 0.0, 100.0, 29.025892632632264, 57.261460721109174, 0.0, 26.175997125047157, 100.0, 4.939800183261108, 0};
 		State s = new State();
-		new TFrame(s);
-		PlayerSkeleton p = new PlayerSkeleton();
-		// Best ave weights achieved so far 
-		double [] w = { 39.87226246992793, 0.2822313301577022, 0.0, 0.0, 0.0, 90.41644192059289, 0.0, 100.0, 29.025892632632264, 57.261460721109174, 26.175997125047157, 100.0, 4.939800183261108};      
-	//	double [] w = { 58.912809904494324, 0.0, 0.31403775562943975, 1.3580772272231452, 14.987648344779851, 97.40010722018096, 0.2238928871419224, 72.2956798023515, 43.969592318687155, 44.01371135773606, 25.64396612944828, 86.53687675629048, 88.44109531383216 };
+		s.setRandomSeed();
+		//	long seed = 1300715528447L;
+		//	s.setSeed(seed);
+		//	new TFrame(s);
+		PlayerSkeleton p = new PlayerSkeleton(); 
 		p.setWeights(w);
 		while(!s.hasLost()) {
 			s.makeMove(p.pickMove(s,s.legalMoves()));
-			s.draw();
-			s.drawNext(0,0);
+			//	s.draw();
+			//	s.drawNext(0,0);
 		}
 		System.out.println("You have completed "+s.getRowsCleared()+" rows.");
-	//	sum +=s.getRowsCleared();
-	//	min = Math.min(min, s.getRowsCleared());
-	//	}
-	//	System.out.println(sum/5 + " " + min);
-		
 	}
-	
+		
 	// Copy of makeMove in State
+	// Feature 13 - rows cleared in this move
+	// Feature 14 - Eroded Cells in this move
 	public boolean makeMove(int orient, int slot) {
-
+		erodedCells = 0;
 		rowsCleared = 0;
-		//System.out.println(orient + " " + slot + " " + nextPiece);
 		//height if the first column makes contact
 		height = top[slot]-pBottom[nextPiece][orient][0];
 		//for each column beyond the first in the piece
@@ -150,15 +204,21 @@ public class PlayerSkeleton {
 		for(int r = height+pHeight[nextPiece][orient]-1; r >= height; r--) {
 			//check all columns in the row
 			boolean full = true;
+			int erodedCandidate = 0;
 			for(int c = 0; c < State.COLS; c++) {
 				if(field[r][c] == 0) {
 					full = false;
 					break;
 				}
+				else if (field[r][c]==turn)
+				{
+					erodedCandidate +=1;
+				}
 			}
 			//if the row was full - remove it and slide above stuff down
 			if(full) {
 				rowsCleared++;
+				erodedCells += erodedCandidate;
 				//for each column
 				for(int c = 0; c < State.COLS; c++) {
 
@@ -173,6 +233,7 @@ public class PlayerSkeleton {
 			}
 		}
 		
+		erodedCells *= rowsCleared;
 		return true;
 	}
 	
@@ -181,6 +242,7 @@ public class PlayerSkeleton {
 	{
 		this.weights = newWeights;
 	}
+	
 	// Calculates and returns heuristics value
 	public int getHeuristicsVal()
 	{
@@ -190,13 +252,16 @@ public class PlayerSkeleton {
 		checkHTransition();
 		checkVTransition();
 		int val = 0;
+		// All Features are negative features(smaller = better)
+		// Except rowsCleared and erodedCells which are negated
 		val += weights[0]*height + weights[1]*totalHeight ;
 		val += weights[2]*diffHeight + weights[3]*altitudeDiff;
 		val += weights[4]*maxHeight + weights[5]*holeCount; 
 		val += weights[6]*weightedSum + weights[7]*connectedHole;
 		val += weights[8]*maxWellDepth + weights[9]*sumWells ;
-		val += weights[10]*hTransition + weights[11]*vTransition;
-		val += weights[12]*rowsCleared;
+		val += weights[10]*weightedWells + weights[11]*hTransition;
+		val += weights[12]*vTransition - weights[13]*rowsCleared;
+		val	-= weights[14]*erodedCells;
 		return val;
 	}
 	
@@ -250,32 +315,40 @@ public class PlayerSkeleton {
 	
 	// Feature 8 - depth of deepest well in field
 	// Feature 9 - Sum of depths of wells
+	// Feature 10 - Sum of weighted wells (Weight of depth n well = 1+2+..+n)
 	public void checkWells()
 	{
 		maxWellDepth = 0;
 		sumWells = 0;
+		weightedWells = 0;
+		int currDepth;
 		if (top[0] < top[1])
 		{
-			maxWellDepth = top[1] - top[0];
-			sumWells = top[1] - top[0];
+			currDepth = top[1] - top[0];
+			maxWellDepth = currDepth;
+			sumWells = currDepth;
+			weightedWells = (currDepth +1)*currDepth/2; //Based on Arithmetic Progression
 		}
 		for (int i=1; i < top.length-1; i++)
 		{
 			if (top[i] < top[i-1] && top[i] < top[i+1])
 			{
-				int currDepth = Math.min(top[i-1], top[i+1]) - top[i];
+				currDepth = Math.min(top[i-1], top[i+1]) - top[i];
 				maxWellDepth = Math.max(currDepth, maxWellDepth);
 				sumWells += currDepth;
+				weightedWells +=(currDepth +1)*currDepth/2;
 			}
 		}
 		if (top[top.length-1] < top[top.length-2])
 		{
-			maxWellDepth = Math.max(maxWellDepth, top[top.length-2]- top[top.length-1]);
-			sumWells += top[top.length-2]- top[top.length-1];
+			currDepth = top[top.length-2]- top[top.length-1];
+			maxWellDepth = Math.max(maxWellDepth, currDepth);
+			sumWells += currDepth;
+			weightedWells +=(currDepth +1)*currDepth/2;
 		}
 	}
 	
-	// Feature 10 - Number of horizontal Transitions
+	// Feature 11 - Number of horizontal Transitions
 	// Must be called after checkHeight to get correct values
 	public void checkHTransition()
 	{
@@ -301,7 +374,7 @@ public class PlayerSkeleton {
 		
 	}
 	
-	// Feature 11 - Number of vertical Transitions
+	// Feature 12 - Number of vertical Transitions
 	// Must be called after checkHeight to get correct values
 	public void checkVTransition() 
 	{

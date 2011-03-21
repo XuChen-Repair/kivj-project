@@ -1,4 +1,5 @@
 import java.awt.Color;
+import java.util.Random;
 
 
 
@@ -7,11 +8,11 @@ public class State {
 	public static final int COLS = 10;
 	public static final int ROWS = 21;
 	public static final int N_PIECES = 7;
-
-	
+	public static long seed;
+	public static Random rand;
 
 	public boolean lost = false;
-	
+
 	
 	
 
@@ -160,16 +161,27 @@ public class State {
 	
 	//constructor
 	public State() {
-		nextPiece = randomPiece();
-
 	}
 	
 	//random integer, returns 0-6
 	private int randomPiece() {
-		return (int)(Math.random()*N_PIECES);
+		//return (int)(Math.random()*N_PIECES);
+		return (int)(rand.nextFloat()*N_PIECES);
 	}
 	
-
+	public long setRandomSeed()
+	{
+		long seed = System.currentTimeMillis();
+		rand = new Random(seed);
+		nextPiece = randomPiece();
+		return seed;
+	}
+	
+	public void setSeed(long seed)
+	{
+		rand = new Random(seed);
+		nextPiece = randomPiece();
+	}
 
 	
 	//gives legal moves for 
