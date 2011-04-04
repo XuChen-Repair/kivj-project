@@ -8,10 +8,10 @@ public class ParticleSwarm {
 	public static final int VELOCITYINIT = RANGE;
 	public static final int FEATURECOUNT = 15; // Number of features to assign weights to
 	public static final int SWARMSIZE = 63;//203; // Number of swarm particles
-	public static final int ITERATION = 50;
+	public static final int ITERATION = 100;
 	public static final int REPETITION = 1;
 	public static final String FILENAME = "particle.txt";
-	public static final long testSeed = 1300715528447L;
+	public static final long testSeed = 1301478912376L; // Use a fixed seed for deterministic playing
 	
 	private static Random rand = new Random(); // Random number generator
 	private static Particle[] particles;
@@ -20,6 +20,8 @@ public class ParticleSwarm {
 
 	public static void main(String[] args) {
 		initSwarm();
+		BufferedWriter bufferedWriter = null;
+
 		for (int iter = 0; iter <ITERATION; iter++)
 		{
 			for (int i = 0; i < particles.length; i++)
@@ -43,36 +45,45 @@ public class ParticleSwarm {
 			for (int k = 0; k< gBestWeight.length; k++)
 				System.out.print(gBestWeight[k] + " ");
 			System.out.println();
+	
+			try {
+				//Construct the BufferedWriter object
+				bufferedWriter = new BufferedWriter(new FileWriter(FILENAME, true));
+				
+				//Start writing to the output stream
+				bufferedWriter.append("Iter " + iter + " Score: " + gBest + "\n");
+				for (int i = 0; i< gBestWeight.length; i++)
+					bufferedWriter.append(gBestWeight[i] + ", ");
+				bufferedWriter.append("\n");
+			} catch (FileNotFoundException ex) {
+				ex.printStackTrace();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			} finally {
+				//Close the BufferedWriter
+				try {
+					if (bufferedWriter != null) {
+						bufferedWriter.flush();
+						bufferedWriter.close();
+					}
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
 		}
 		System.out.print("Best Score " + gBest + " ");
 		for (int i = 0; i< gBestWeight.length; i++)
 			System.out.print(gBestWeight[i] + " ");
 		System.out.println();
-		/*	for (int i = 0; i < particles.length; i++)
-		{
-			System.out.print("Weights: ");
-			for (int j = 0; j< particles[i].getWeights().length; j++)
-			{
-				System.out.print(particles[i].getWeights()[j] + " ");
-			}
-			System.out.println();
-			for (int j = 0; j< particles[i].velocity.length; j++)
-			{
-				System.out.print(particles[i].velocity[j] + " ");
-			}
-			System.out.println();
-		}*/
-
-		BufferedWriter bufferedWriter = null;
 
 		try {
 			//Construct the BufferedWriter object
 			bufferedWriter = new BufferedWriter(new FileWriter(FILENAME, true));
 
 			//Start writing to the output stream
-			bufferedWriter.append(gBest + " ");
+			bufferedWriter.append("Best Results after 50 iterations: " + gBest + " ");
 			for (int i = 0; i< gBestWeight.length; i++)
-				bufferedWriter.append(gBestWeight[i] + " ");
+				bufferedWriter.append(gBestWeight[i] + ", ");
 			bufferedWriter.append("\n");
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
@@ -95,23 +106,15 @@ public class ParticleSwarm {
 	private static int evaluate(Particle particle) {
 		State s = new State();
 		s.setSeed(testSeed);
-		//	new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();	
 		p.setWeights(particle.getWeights());
 		while(!s.hasLost()) {
 			s.makeMove(p.pickMove(s,s.legalMoves()));
-			//	s.draw();
-			//	s.drawNext(0,0);
-			//		try {
-			//	Thread.sleep(300);
-			//	} catch (InterruptedException e) {
-			//		e.printStackTrace();	
-			//	}
 		}
-		//System.out.println("You have completed "+s.getRowsCleared()+" rows.");
 		return s.getRowsCleared();
 	}
 
+	// Initialise particle swarm
 	private static void initSwarm() {
 		particles = new Particle[SWARMSIZE];
 		for (int i = 0; i < SWARMSIZE; i++)
@@ -122,6 +125,7 @@ public class ParticleSwarm {
 		}
 	}
 
+	// Generates random initial velocity
 	private static double[] generateRandomV() {
 		double [] v = new double [FEATURECOUNT];
 		for (int i = 0; i < v.length; i++)

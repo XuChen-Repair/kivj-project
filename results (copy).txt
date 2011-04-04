@@ -1,0 +1,5 @@
+Weights1: min score :115227 total score :11447059
+Weights4: min score :28980 total score :17050527
+Weights6: min score :43079 total score :23565213
+
+
